@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     tasks: [
       {
         type: ObjectId,
-        unique: true,
+        // unique: true,
         ref: "tasks",
       },
     ],

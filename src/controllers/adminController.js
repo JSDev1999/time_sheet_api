@@ -71,7 +71,7 @@ const loginUser = async (req, res) => {
           body.password,
           checkUser.password
         );
-        if (validPassword) {
+        if (validPassword && checkUser?.isAdmin) {
           const { password, ...others } = checkUser._doc;
           const token = JWT.sign({ _id: others._id }, process.env.JWT_SECRET);
           const data = { ...others, token };

@@ -2,10 +2,22 @@ import mongoose, { ObjectId } from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
-    taskName: {
+    title: {
       type: String,
       required: true,
       minlength: 4,
+    },
+    createdDate: {
+      type: Date,
+      required: true,
+    },
+    dueDate: {
+      type: Date,
+      required: true,
+    },
+    isCompleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

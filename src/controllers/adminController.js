@@ -2,6 +2,7 @@ import Bcrypt from "bcrypt";
 import HttpErrors from "http-errors";
 import JWT from "jsonwebtoken";
 import { HttpStatus, Response } from "../helpers/Response.js";
+import taskModel from "../models/taskModel.js";
 import userModel from "../models/userModel.js";
 import {
   loginUserSchema,
@@ -126,32 +127,21 @@ const loginUser = async (req, res) => {
 const getUserData = async (req, res, next) => {
   try {
     const userId = req.params.id;
-    //console.log("yyy", req.params.id);
-    await userModel
-      .findOne({ _id: userId })
-      .then((resp) => {
-        const { password, ...others } = resp._doc;
-        return res.status(HttpStatus.OK.code).json(
-          new Response(
-            HttpStatus.OK.code,
-            HttpStatus.OK.status,
+    const results = await userModel
+      .findById({ _id: userId })
+      .populate("tasks", "_id title createdDate dueDate isCompleted");
 
-            "user found",
-            others
-          )
-        );
-      })
-      .catch((error) => {
-        return res
-          .status(HttpStatus.OK.code)
-          .json(
-            new Response(
-              HttpStatus.OK.code,
-              HttpStatus.OK.status,
-              error.message
-            )
-          );
-      });
+    const { password, ...others } = results._doc;
+    return res
+      .status(HttpStatus.OK.code)
+      .json(
+        new Response(
+          HttpStatus.OK.code,
+          HttpStatus.OK.status,
+          "user found",
+          others
+        )
+      );
   } catch (error) {
     return res
       .status(HttpStatus.BAD_REQUEST.code)
@@ -173,38 +163,29 @@ const updateUserData = async (req, res, next) => {
     } else {
       const userId = req.params.id;
       //console.log("yyy", req.params.id);
-      await userModel
-        .findByIdAndUpdate(
-          userId,
-          {
-            $set: value,
-          },
-          { new: true }
-        )
-        .then((resp) => {
-          const { password, ...others } = resp._doc;
-          return res
-            .status(HttpStatus.OK.code)
-            .json(
-              new Response(
-                HttpStatus.OK.code,
-                HttpStatus.OK.status,
-                "Details Updated",
-                others
-              )
-            );
-        })
-        .catch((error) => {
-          return res
-            .status(HttpStatus.OK.code)
-            .json(
-              new Response(
-                HttpStatus.OK.code,
-                HttpStatus.OK.status,
-                error.message
-              )
-            );
-        });
+      const results = await userModel.findByIdAndUpdate(
+        userId,
+        { $push: { tasks: value?.taskId } },
+        { new: true }
+      );
+
+      const { password, ...others } = results._doc;
+
+      await taskModel.findByIdAndUpdate(
+        value?.taskId,
+        { isAssigned: true },
+        { new: true }
+      );
+      return res
+        .status(HttpStatus.OK.code)
+        .json(
+          new Response(
+            HttpStatus.OK.code,
+            HttpStatus.OK.status,
+            "Details Updated",
+            others
+          )
+        );
     }
   } catch (error) {
     return res
@@ -259,4 +240,38 @@ const getAllUsers = async (req, res, next) => {
       );
   }
 };
-export { registerUser, loginUser, getUserData, updateUserData, getAllUsers };
+
+const deleteUser = async (req, res, next) => {
+  try {
+    let id = req.query?.userId;
+    const results = await userModel.findByIdAndDelete(id);
+    return res
+      .status(HttpStatus.OK.code)
+      .json(
+        new Response(
+          HttpStatus.OK.code,
+          HttpStatus.OK.status,
+          "operation successfull",
+          results
+        )
+      );
+  } catch (error) {
+    return res
+      .status(HttpStatus.BAD_REQUEST.code)
+      .json(
+        new Response(
+          HttpStatus.BAD_REQUEST.code,
+          HttpStatus.BAD_REQUEST.status,
+          error.message
+        )
+      );
+  }
+};
+export {
+  registerUser,
+  loginUser,
+  getUserData,
+  updateUserData,
+  getAllUsers,
+  deleteUser,
+};

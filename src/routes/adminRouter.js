@@ -1,5 +1,6 @@
 import Express from "express";
 import {
+  deleteUser,
   getAllUsers,
   getUserData,
   loginUser,
@@ -15,5 +16,6 @@ adminRouter.post("/loginuser", loginUser);
 adminRouter.get("/profile/:id", verifyToken, getUserData);
 adminRouter.put("/profile/update/:id", verifyToken, updateUserData);
 adminRouter.get("/getall", verifyToken, getAllUsers);
+adminRouter.delete("/delete", verifyToken, deleteUser);
 
 export default adminRouter;
